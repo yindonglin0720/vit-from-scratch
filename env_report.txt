@@ -1,10 +1,14 @@
-========== ViT 项目环境验证报告 ========== 
-日期: 2026/06/13 周六 
-Python路径: 
+========== ViT 椤圭洰鐜楠岃瘉鎶ュ憡 ========== 
+鏃ユ湡: 鍛ㄥ叚 2026/06/13 
+ 
+Python璺緞: 
 C:\Users\text\anaconda3\envs\pytorch\python.exe
-PyTorch版本: 
+ 
+PyTorch鐗堟湰: 
 2.11.0+cu128
+ 
+CUDA鍙敤: 
+True
+ 
 GPU: 
 NVIDIA GeForce RTX 5070 Laptop GPU
-CUDA可用: 
-True
