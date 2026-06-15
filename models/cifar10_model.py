@@ -6,16 +6,20 @@ class CIFAR10CNN(nn.Module):
         # 特征提取部分（卷积块）
         self.conv_block1 = nn.Sequential(
             nn.Conv2d(3, 32, 3, padding=1),   # 输入3通道RGB → 32个特征图，3×3卷积
+            nn.BatchNorm2d(32),
             nn.ReLU(),
             nn.Conv2d(32, 32, 3, padding=1),
+            nn.BatchNorm2d(32),
             nn.ReLU(),
             nn.MaxPool2d(2),                   # 32×32 → 16×16
             nn.Dropout(0.25)                   # 随机丢弃25%
         )
         self.conv_block2 = nn.Sequential(
             nn.Conv2d(32, 64, 3, padding=1),  # 32 → 64通道
+            nn.BatchNorm2d(64),
             nn.ReLU(),
             nn.Conv2d(64, 64, 3, padding=1),
+            nn.BatchNorm2d(64),
             nn.ReLU(),
             nn.MaxPool2d(2),                   # 16×16 → 8×8
             nn.Dropout(0.25)
