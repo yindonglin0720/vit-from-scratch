@@ -1,7 +1,6 @@
 import torch
 from torch.utils.data import Dataset
 
-
 class MyMNIST(Dataset):
     """把 torchvision 的 MNIST 包装成自己写的 Dataset——理解 Dataset 的骨架"""
 

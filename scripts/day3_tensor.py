@@ -1,21 +1,9 @@
 import torch
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
-import os
-root = r"C:\Users\text\Desktop\vit-from-scratch\data"
-print("期望路径:", os.path.join(root, "MNIST", "raw"))
-print("路径存在:", os.path.exists(os.path.join(root, "MNIST", "raw")))
-transform = transforms.Compose([
-    transforms.ToTensor(),
-    transforms.Normalize((0.5,), (0.5,))
-])
+transform = transforms.Compose([transforms.ToTensor(),transforms.Normalize((0.5,), (0.5,))])
 
-train_data = datasets.MNIST(
-    root = r"C:\Users\text\Desktop\vit-from-scratch\data",
-    train=True,
-    download=True,    # 已手动下载，不自动下载
-    transform=transform
-)
+train_data = datasets.MNIST(root = r"C:\Users\text\Desktop\vit-from-scratch\data",train=True,download=True,transform=transform)
 
 print(f"训练样本数: {len(train_data)}")
 print(f"单张图片 shape: {train_data[0][0].shape}")
