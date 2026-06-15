@@ -4,3 +4,5 @@ models/best_mnist.pth
 __pycache__/ 
 models/best_cifar10.pth
 data/cifar-10-batches-py/ 
+models/best_mnist.pth 
+models/best_cifar10.pth 
