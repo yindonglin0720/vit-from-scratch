@@ -1,2 +1,4 @@
 data/ 
 .idea/  
+models/best_mnist.pth 
+__pycache__/ 
