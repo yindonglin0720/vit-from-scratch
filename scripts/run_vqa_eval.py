@@ -6,7 +6,7 @@ from transformers import Qwen3VLForConditionalGeneration, AutoProcessor
 import os
 
 # ============================================
-# 🔴 必须手敲 第1段：加载模型（同 D2）
+# 第1段：加载模型
 # ============================================
 model_dir = r"C:\Users\text\.cache\modelscope\hub\models\Qwen\Qwen3-VL-4B-Instruct"
 model = Qwen3VLForConditionalGeneration.from_pretrained(
@@ -17,10 +17,9 @@ processor = AutoProcessor.from_pretrained(model_dir)
 
 
 # ============================================
-# 🔴 必须手敲 第2段：批量推理函数
+# 第2段：批量推理函数
 # ============================================
 def run_vqa(json_path):
-    """读取 vqa_test.json，逐条推理，返回结果列表"""
     with open(json_path, "r", encoding="utf-8") as f:
         samples = json.load(f)
 
@@ -67,6 +66,8 @@ def run_vqa(json_path):
             "question": question,
             "reference_answer": sample["reference_answer"],
             "model_answer": answer,
+            "type": sample.get("type", "unknown"),
+            "source": sample.get("source", "unknown"),
         })
 
         if (i + 1) % 5 == 0:
@@ -76,25 +77,23 @@ def run_vqa(json_path):
 
 
 # ============================================
-# 第3段：保存结果（理解即可，不需要手敲）
+# 第3段：保存结果
 # ============================================
 if __name__ == "__main__":
     json_path = r"C:\Users\text\Desktop\vit-from-scratch\data\vqa_test.json"
     results = run_vqa(json_path)
 
-    # 保存 JSON
     out_json = r"C:\Users\text\Desktop\vit-from-scratch\outputs\vqa_results.json"
     os.makedirs(os.path.dirname(out_json), exist_ok=True)
     with open(out_json, "w", encoding="utf-8") as f:
         json.dump(results, f, ensure_ascii=False, indent=2)
 
-    # 保存 CSV（方便 Excel 打开看）
     out_csv = r"C:\Users\text\Desktop\vit-from-scratch\outputs\vqa_results.csv"
     with open(out_csv, "w", encoding="utf-8-sig") as f:
-        f.write("index,image,question,reference_answer,model_answer\n")
+        f.write("index,image,question,reference_answer,model_answer,type,source\n")
         for r in results:
             ans = r["model_answer"].replace('"', '""').replace("\n", " ")
-            f.write(f'{r["index"]},{r["image"]},"{r["question"]}",*{r["reference_answer"]}*,"{ans}"\n')
+            f.write(f'{r["index"]},{r["image"]},"{r["question"]}",*{r["reference_answer"]}*,"{ans}",{r["type"]},{r["source"]}\n')
 
     correct = sum(1 for r in results if r["reference_answer"] in r["model_answer"])
     print(f"\n简单匹配准确率: {correct}/{len(results)}")

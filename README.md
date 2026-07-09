@@ -1,15 +1,19 @@
-# vit-from-scratch
-
-> 多模态大模型学习项目 —— 从 PyTorch 工程基础 → CLIP 图文检索 → VLM 视觉问答的全链路实践。
+# 基于 Qwen3-VL 的图像问答系统构建、评测与 LoRA 微调
+> 多模态视觉问答项目 —— 涵盖 CLIP 图文检索、VQA 零样本推理、三层评分体系与 LoRA 微调全链路。
 
 PyTorch 深度学习工程实践，覆盖 MLP/CNN 基础训练、CLIP 双塔图文检索、Qwen3-VL 零样本 VQA 三大阶段。
 
 ## 项目背景
+## 项目概述
 
-本项目是我多模态大模型学习路线的阶段成果，历时三周，逐步深入：
-- 第 1 周：PyTorch 工程基础（MNIST + CIFAR10 训练）
-- 第 2 周：CLIP 双塔图文检索（中文 CLIP + Recall@K 评估）
-- 第 3 周：VLM 零样本视觉问答（Qwen3-VL + VQA 测试集）
+本项目从零构建多模态图像问答系统：加载 Qwen3-VL-4B-Instruct，设计 6 类 84 条 VQA 测试样本，实现三层评分体系，完成 zero-shot baseline 与 LoRA 微调对比。
+
+| 维度 | 结果 |
+|---|---|
+| CLIP 图文检索 | Recall@5 100%（120张图，30种描述） |
+| VQA zero-shot | human_score 92.3%（84条，6类型） |
+| LoRA 微调 | 0.1%参数训练，loss 21→15，链路全通 |
+| 评测体系 | 三层评分 + 6类型分项 + 错误归因 |
 
 目标不是追求 SOTA，而是建立"从模型加载、数据构造、推理到评估"的全流程能力。
 
@@ -25,7 +29,7 @@ PyTorch 深度学习工程实践，覆盖 MLP/CNN 基础训练、CLIP 双塔图�
 ## 目录结构
 ├── data/
 │   ├── clip_images/    # 120 张合成图文数据（10色×3形状×4变体）
-│   ├── vqa_test.json   # 31 条 VQA 测试样本（5类问题）
+│   ├── vqa_test.json   # 84 条 VQA 测试样本（5类问题）
 │   ├── mnist_raw/      # MNIST 数据集
 │   └── cifar10/        # CIFAR10 数据集
 ├── models/              # 模型定义 + 训练好的权重
@@ -164,3 +168,64 @@ python scripts/run_vqa_eval.py
 - 复现 CLIP 双塔图文检索：加载中文 CLIP（ViT-B/16 + BERT），构造 120 张合成图文数据集，实现文本搜图和图搜文双向检索，Recall@5 达 100%
 - 部署 Qwen3-VL-4B-Instruct 零样本 VQA：构造 31 条多类型测试集，独立完成批量推理与人工评测，修正正确率 93.5%，完成系统化错误分析
 - 掌握 CNN/MLP/Transformer/ViT/BERT 模型原理，熟练 PyTorch 训练循环、数据增强、BatchNorm 及 Git 规范化工作流（20+ commits）
+
+## 第 4 周：VLM 项目增强与 LoRA 微调入门
+
+### 概述
+
+在第 3 周 zero-shot baseline 基础上，将 VQA 测试集从 31 条扩展到 84 条（覆盖 6 类问题），升级评分方式（exact_match → keyword_match），固定 zero-shot baseline，并基于 PEFT 库完成 QLoRA 小规模微调尝试。
+
+### VQA 数据集 v2
+
+| 指标 | 数值 |
+|------|------|
+| 总样本数 | 84 条 |
+| 问题类型 | 6 类（color_shape / count / object / spatial / ocr / edge） |
+| 训练/验证/测试 | 58 / 13 / 13（70/15/15 拆分） |
+| 数据源 | clip_images 合成图 + 真实/AI 生成图片 |
+
+### Zero-shot Baseline
+
+| 评分方式 | 结果 |
+|------|------|
+| exact_match | 52/84（61.9%） |
+| keyword_match | 65/84（77.4%） |
+
+| 问题类型 | keyword_match |
+|------|------|
+| spatial（空间关系） | 11/12（91.7%） |
+| color_shape（颜色形状） | 16/18（88.9%） |
+| ocr（文字识别） | 11/13（84.6%） |
+| object（物体识别） | 7/10（70.0%） |
+| count（数量判断） | 17/26（65.4%） |
+| edge（物体边界） | 3/5（60.0%） |
+
+### LoRA/QLoRA 微调
+
+| 项目 | 详情 |
+|------|------|
+| 微调方式 | PEFT LoRA（rank=8, alpha=16） |
+| 可训练参数 | 4,866,048（占总参数 0.1%） |
+| 目标模块 | q_proj, v_proj, o_proj |
+| 训练数据 | 58 条 SFT 格式 |
+| 框架 | PEFT + Transformers Trainer |
+
+### 运行方式
+
+```bash
+# D5: 数据格式转换
+python scripts/convert_sft_data.py
+
+# D6: LoRA 微调
+python scripts/train_lora.py
+
+# D1-D2: 批量推理 + 评分
+python scripts/run_vqa_eval.py
+python scripts/evaluate_results.py
+```
+
+### 关键收获
+
+- 理解 LoRA/QLoRA 原理：低秩分解 + 量化，8GB 显存即可微调 4B VLM
+- 掌握 PEFT 库的 LoraConfig、get_peft_model、Trainer 训练流程
+- 学会数据分析闭环：找短板（count/edge）→造数据→微调→看改善
